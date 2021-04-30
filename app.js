@@ -4,6 +4,7 @@ const ejs=require("ejs");
 const bodyParser=require("body-parser");
 const mongoose=require("mongoose");
 const alert=require("alert");
+const encrypt=require("mongoose-encryption");
 
 const app=express();
 app.set('view engine', 'ejs');
@@ -19,7 +20,10 @@ const userSchema=new mongoose.Schema(
         password:String
     }
 );
+const secret="Thisisnolongerasecret";
+userSchema.plugin(encrypt,{secret:secret,encryptedFields:["password"]});
 const User=new mongoose.model("User",userSchema);
+
 
 
 
