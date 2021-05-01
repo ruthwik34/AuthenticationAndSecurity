@@ -5,7 +5,8 @@ const ejs=require("ejs");
 const bodyParser=require("body-parser");
 const mongoose=require("mongoose");
 const alert=require("alert");
-const md5=require("md5");
+const bcrypt=require("bcrypt");
+const saltRounds=10;
 
 const app=express();
 app.set('view engine', 'ejs');
@@ -48,18 +49,27 @@ app.post("/register",(req,res)=>{
         }
         else
         {
-            var newUser=new User({
-                email:req.body.username,
-                password:md5(req.body.password)
-            });
-            newUser.save((err)=>{
-                if(err) console.log(err);
+            bcrypt.hash(req.body.password,saltRounds,(err,hash)=>{
+                if(err) 
+                {
+                    console.log(err);
+                }
                 else
                 {
-                    alert("Account Created Successfully. Try Logging in using your email and password");
-                    res.redirect("/login");
+                    var newUser=new User({
+                        email:req.body.username,
+                        password:hash
+                    });
+                    newUser.save((err)=>{
+                        if(err) console.log(err);
+                        else
+                        {
+                            alert("Account Created Successfully. Try Logging in using your email and password");
+                            res.redirect("/login");
+                        }
+                    });
                 }
-            });
+            })
         }
     })
 })
@@ -69,15 +79,18 @@ app.post("/login",(req,res)=>{
         else{
             if(foundItem)
             {
-                if(foundItem.password===md5(req.body.password))
-                {
-                    res.render("secrets");
-                }
-                else
-                {
-                    alert("Wrong Password. Try Again");
-                    res.redirect("/login");
-                }
+                bcrypt.compare(req.body.password,foundItem.password,(err,result)=>{
+                    if(result === true)
+                    {
+                        res.render("secrets");
+                    }
+                    else
+                    {
+                        alert("Wrong Password. Try Again");
+                        res.redirect("/login");
+                    }
+                })
+                
             }
             else
             {
