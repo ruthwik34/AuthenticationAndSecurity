@@ -54,7 +54,8 @@ const userSchema=new mongoose.Schema(
         email:String,
         password:String,
         googleId:String,
-        facebookId:String
+        facebookId:String,
+        secrets:[]
     }
 );
 
@@ -103,15 +104,17 @@ app.get("/register",(req,res)=>{
     res.render("register");
 })
 app.get("/secrets",(req,res)=>{
-    if(req.isAuthenticated())
-    {
-        res.render("secrets");
-    }
-    else
-    {
-        res.redirect("/login");
-    }
-})
+    User.find({secrets:{$ne:null}},(err,foundUsers)=>{
+      if(err)
+      {
+        console.log(err);
+      }
+      else
+      {
+        res.render("secrets",{items:foundUsers});
+      }
+    });
+});
 
 // POST REQUESTS 
 app.post("/register",(req,res)=>{
@@ -150,7 +153,30 @@ app.get("/logout",(req,res)=>{
     res.redirect("/");
 })
 
-
+app.get("/submit",(req,res)=>{
+  if(req.isAuthenticated())
+  {
+      res.render("submit");
+  }
+  else
+  {
+      res.redirect("/login");
+  }
+});
+app.post("/submit",(req,res)=>{
+    User.findById(req.user.id,(err,foundUser)=>{
+        if(err)
+        {
+          console.log(err);
+        }
+        else
+        {
+          foundUser.secrets.push(req.body.secret);
+          foundUser.save();
+          res.redirect("secrets");  
+        }
+    });
+});
 
 /* ----------------------------------LISTENING TO THE PORT ---------------------------------- */
 app.listen(3000,()=>{
